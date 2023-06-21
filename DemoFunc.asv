@@ -1,0 +1,38 @@
+patchSize = 60; 
+slideStep = 40;
+lambdaL = 0.6;
+mu = 0.001;
+alpha = 0.2;
+ezk = 4;
+ezp = 12;
+
+img = imread('1.png');
+
+if ndims( img ) == 3
+    img = rgb2gray( img );
+end
+img = double(img); 
+[m,n]=size(img);
+
+%% constrcut patch tensor of original image
+tenD = gen_patch_ten(img, patchSize, slideStep);
+[n1,n2,n3] = size(tenD);
+
+%% The proposed model
+lambda = lambdaL / sqrt(max(n1,n2)*n3); 
+[tenB,tenT,tenS,f,ORG,NOW] = CCopy_T_trpca_pstnn(tenD,lambda,mu,alpha,ezp,ezk,patchSize, slideStep,m,n,size0);  
+%% recover the target and background image
+tarImg = res_patch_ten_mean(tenT, img, patchSize, slideStep);
+tarImg = uint8(tarImg);
+bacImg = res_patch_ten_mean(tenB, img, patchSize, slideStep);
+bacImg = uint8(bacImg);
+SImg = res_patch_ten_mean(tenS, img, patchSize, slideStep);
+
+maxv = max(max(double(img)));
+E = uint8( mat2gray(tarImg)*maxv ); 
+E = im2bw(E,0);
+
+figure
+subplot(121),imshow(img,[]),title('Origin Image');
+subplot(122),imshow(E,[]),title('Output Image');
+
